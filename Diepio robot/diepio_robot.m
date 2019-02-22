@@ -2,8 +2,6 @@
 close all
 clear all
 
-
-
 import java.awt.Robot;
 import java.awt.event.*;
 tools= java.awt.Toolkit.getDefaultToolkit();
@@ -12,7 +10,6 @@ robo = java.awt.Robot;
 %% create initialized variables
 greyinfront = false;
 FaceDirection = 4;
-TakeAction = true;
 warnings = 0;
 
 %% Create static variables
@@ -49,16 +46,15 @@ tank =      [ ceil(0.47*datavisionview_size(y)),ceil(0.48*datavisionview_size(x)
              floor(0.535*datavisionview_size(y)),floor(0.525*datavisionview_size(x))];
 
 northeastroi = [  ceil((0.47-sensor(y)-gap(y))*datavisionview_size(y)) ,  ceil((0.525+gap(x))*datavisionview_size(x));...
-                floor((0.47-gap(y))*datavisionview_size(y)) , floor((0.525+gap(x)+sensor(x))*datavisionview_size(x)) ];
-southeastroi = [  ceil((0.535+gap(y))*datavisionview_size(y)) ,  ceil((0.525+gap(x))*datavisionview_size(x));...
+                 floor((0.47-gap(y))*datavisionview_size(y))           , floor((0.525+gap(x)+sensor(x))*datavisionview_size(x)) ];
+southeastroi = [  ceil((0.535+gap(y))*datavisionview_size(y))          ,  ceil((0.525+gap(x))*datavisionview_size(x));...
                 floor((0.535+sensor(y)+gap(y))*datavisionview_size(y)) , floor((0.525+gap(x)+sensor(x))*datavisionview_size(x)) ];        
-southwestroi = [  ceil((0.535+gap(y))*datavisionview_size(y)) ,  ceil((0.48-sensor(x)-gap(x))*datavisionview_size(x));...
+southwestroi = [  ceil((0.535+gap(y))*datavisionview_size(y))          ,  ceil((0.48-sensor(x)-gap(x))*datavisionview_size(x));...
                 floor((0.535+sensor(y)+gap(y))*datavisionview_size(y)) , floor((0.48-gap(x))*datavisionview_size(x)) ];
 northwestroi = [  ceil((0.47-sensor(y)-gap(y))*datavisionview_size(y)) ,  ceil((0.48-sensor(x)-gap(x))*datavisionview_size(x));...
-                floor((0.47-gap(y))*datavisionview_size(y)) , floor((0.48-gap(x))*datavisionview_size(x)) ];
-            
-eastroi    =[  ceil((0.47+sensor(y)/2)*datavisionview_size(y)) ,  ceil((0.525+gap(x))*datavisionview_size(x));...
-                floor((0.47+sensor(y))*datavisionview_size(y)) , floor((0.525+gap(x)+sensor(x)/2)*datavisionview_size(x)) ];
+                floor((0.47-gap(y))*datavisionview_size(y))            , floor((0.48-gap(x))*datavisionview_size(x)) ];
+eastroi    =[  ceil((0.47+sensor(y)/2)*datavisionview_size(y))         ,  ceil((0.525+gap(x))*datavisionview_size(x));...
+                floor((0.47+sensor(y))*datavisionview_size(y))         , floor((0.525+gap(x)+sensor(x)/2)*datavisionview_size(x)) ];
 
 southroi = [  ceil((0.535+gap(y))*datavisionview_size(y)) ,  ceil((0.48+sensor(x)/2)*datavisionview_size(x));...
                 floor((0.535+sensor(y)/2+gap(y))*datavisionview_size(y)) , floor((0.48+sensor(x))*datavisionview_size(x)) ];
@@ -69,20 +65,8 @@ westroi = [  ceil((0.47+sensor(y)/2)*datavisionview_size(y)) ,   floor((0.48-gap
 northroi = [  ceil((0.47-gap(y)-sensor(y)/2)*datavisionview_size(y)) ,  ceil((0.48+sensor(x)/2)*datavisionview_size(x));...
                 floor((0.47-gap(y))*datavisionview_size(y)) , floor((0.48+sensor(x))*datavisionview_size(x)) ];
 
-points_screen = zeros(datavisionview_size(y), datavisionview_size(x));  %CoM of objects
-masked_screen = zeros(datavisionview_size(y), datavisionview_size(x));  %Color-thresholded binary mask of objects.
-%homezone_screen=zeros(datavisionview_size(y), datavisionview_size(x));
-
 
 %% Create Figures
-if debugging == true
-    figure
-    COMpoints = imshow(points_screen, 'InitialMagnification', 100);
-    title('Centre Of Mass of farmable shape objects')
-    figure
-    bwblob = imshow(masked_screen, 'InitialMagnification', 100);
-    title('Sillhouettes of farmable shape objects')
-end
 figure
 showinformationscreen = imshow(masked_screen, 'InitialMagnification',100);
 title('The gamefield with detection patches')
@@ -96,11 +80,11 @@ pause(4);
 %%Initializations
 i=0; %Loop iterations
 playgame = true;
-timer = tic;i2=0;%For finding frame-rate data.
+
 %%
 while  playgame == true
     i=i+1;
-    if i>5500    %For prototyping, ensure the robo shuts down eventually.
+    if i>150    %For safety, ensure the robo shuts down eventually.
         playgame=false;
     end    
     
@@ -113,18 +97,7 @@ while  playgame == true
                 transpose(reshape(pixelsData(3, scaler:scaler:end, scaler:scaler:end), datavisionview_size(x) , datavisionview_size(y))), ...
                 transpose(reshape(pixelsData(2, scaler:scaler:end, scaler:scaler:end), datavisionview_size(x) , datavisionview_size(y))), ...
                 transpose(reshape(pixelsData(1, scaler:scaler:end, scaler:scaler:end), datavisionview_size(x) , datavisionview_size(y))));
-
-    %    gamescreen = imread('test.png'); % protoyping
-    if  isequal(sum(transpose(smallgamescreen(1:5, 1:20, 2)) > 173 ) >15,    ... %This is a goofy, non-restrictive threshold
-        sum(transpose(smallgamescreen( 1:5, 1:20, 2)) < 177 ) >15) &&...
-       sum(any(smallgamescreen(1:5,1:20 ,3) > 233))>30
-        %This is the best I could do, specific to my color scheme, but
-        %MATLAB lacks any ability to intercept keyboard inputs, while the
-        %focus is on a non-MATLAB window.
-        error('You have elected to exit the game')
-    end
     
-
     %% Silhouette objects on the field
     [blue_sieve, red_sieve, yellow_sieve] = shape_shadows(smallgamescreen);
     masked_screen = (blue_sieve + red_sieve + yellow_sieve)==true;  % Faster than | 'or'-ing them all.
@@ -157,7 +130,6 @@ while  playgame == true
 
     points_screen = zeros(datavisionview_size(y), datavisionview_size(x));
     points_screen([squares_ind, triangles_ind, pentagons_ind])=1;
-
 
     %% Shoot at the best nearest candidate shape!
     shapes_info = [squares_info; triangles_info;pentagons_info];
@@ -207,7 +179,7 @@ while  playgame == true
         goleft = goeast;
         goright = gowest;
         
-        left = west;
+        left = east;
         right = west;
         reverse = north;
         
@@ -270,11 +242,11 @@ while  playgame == true
             elseif mean(mean(GreyFieldFinder(backrightsensor))) < 0.2
                 FaceDirection = right;
             else %Something unexpected has happened
-                error('Heading %f, The right sensor was in grey, as was the left, but neither rear sensor was in homezone ', FaceDirection)
+                error('Heading %d, The right sensor was in grey, as was the left, but neither rear sensor was in homezone ', FaceDirection)
             end
         else
             warnings = warnings +1;
-            warning('Heading %f, the left sensor was in grey, the right sensor was in partial grey ', FaceDirection)
+            warning('Heading %d, the left sensor was in grey, the right sensor was in partial grey ', FaceDirection)
         end
     elseif mean(mean(GreyFieldFinder(rightsensor))) > 0.8   %The right is in greyfield...
         if mean(mean(GreyFieldFinder(leftsensor))) < 0.2    %...And the left sensor is not
@@ -296,38 +268,28 @@ while  playgame == true
             elseif mean(mean(GreyFieldFinder(backrightsensor))) < 0.2
                 FaceDirection = right;
             else %Something unexpected has happened
-                error('Heading %f, The right sensor was in grey, as was the left, but neither rear sensor was in homezone ', FaceDirection)
+                error('Heading %d, The right sensor was in grey, as was the left, but neither rear sensor was in homezone ', FaceDirection)
             end    
             
         else    %Something unexpected has happened
             warnings = warnings +1;
-            warning('Heading %f, the right sensor was in grey, the left sensor was in partial grey ', FaceDirection)
+            warning('Heading %d, the right sensor was in grey, the left sensor was in partial grey ', FaceDirection)
         end
-    else             %Robo is in homezone or OutBounds
+    else    %Robo must be in homezone or OutBounds
         if mean(mean(OutFieldFinder(leftsensor))) > 0.8 %If OutofBounds is in front...
             FaceDirection = reverse;
         elseif mean(mean(GreyFieldFinder(backrightsensor))) < 0.2 %If the homezone area is in front
             %The bot is in the green zone, no context, no preference
             %for movement direction.
             robo.keyPress(goforward)
-        end
-    
-    robo.keyPress(goforward)
 
+        else %Something unexpected has happened
+            warning('Heading %d, the front was not in outerbounds or grey, and backright was not in green. Perhaps this is some edge-case glitch', FaceDirection)
+        end  
     end
     
-    if debugging == true
-        if i-i2 >FPSprintrate %Intermittently display the mean framerate of the last few loops
-            elapsed_time = toc(timer);
-            FPSprintrate/elapsed_time % ; Leave unsuppressed for FPS readings.
-            timer = tic;
-            i2=i;
-        end
-        
-        bwblob.CData = masked_screen;
-        COMpoints.CData = points_screen;
-        showinformationscreen.CData = informationscreen;
-        drawnow
-    end
     showinformationscreen.CData = informationscreen;
 end
+
+
+warnings

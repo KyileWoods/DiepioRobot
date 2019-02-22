@@ -35,11 +35,13 @@ goeast = 39;
 gonorth = 38;
 gosouth = 40;
 
-
+endonframe = 1000;
 
 rectangle = java.awt.Rectangle(tools.getScreenSize()); 
 screen_size = [  rectangle.height , rectangle.width ];
 datavisionview_size = [  floor(screen_size(y)/scaler), floor(screen_size(x)/scaler) ]; %Go to floor so different sized-screens can be shrunken down
+
+
 
  %% ROI Definitions---------------------------------------------------------
 sensor = [ 0.10 , 0.5622*0.10 ];
@@ -49,16 +51,15 @@ tank =      [ ceil(0.47*datavisionview_size(y)),ceil(0.48*datavisionview_size(x)
              floor(0.535*datavisionview_size(y)),floor(0.525*datavisionview_size(x))];
 
 northeastroi = [  ceil((0.47-sensor(y)-gap(y))*datavisionview_size(y)) ,  ceil((0.525+gap(x))*datavisionview_size(x));...
-                floor((0.47-gap(y))*datavisionview_size(y)) , floor((0.525+gap(x)+sensor(x))*datavisionview_size(x)) ];
-southeastroi = [  ceil((0.535+gap(y))*datavisionview_size(y)) ,  ceil((0.525+gap(x))*datavisionview_size(x));...
+                 floor((0.47-gap(y))*datavisionview_size(y))           , floor((0.525+gap(x)+sensor(x))*datavisionview_size(x)) ];
+southeastroi = [  ceil((0.535+gap(y))*datavisionview_size(y))          ,  ceil((0.525+gap(x))*datavisionview_size(x));...
                 floor((0.535+sensor(y)+gap(y))*datavisionview_size(y)) , floor((0.525+gap(x)+sensor(x))*datavisionview_size(x)) ];        
-southwestroi = [  ceil((0.535+gap(y))*datavisionview_size(y)) ,  ceil((0.48-sensor(x)-gap(x))*datavisionview_size(x));...
+southwestroi = [  ceil((0.535+gap(y))*datavisionview_size(y))          ,  ceil((0.48-sensor(x)-gap(x))*datavisionview_size(x));...
                 floor((0.535+sensor(y)+gap(y))*datavisionview_size(y)) , floor((0.48-gap(x))*datavisionview_size(x)) ];
 northwestroi = [  ceil((0.47-sensor(y)-gap(y))*datavisionview_size(y)) ,  ceil((0.48-sensor(x)-gap(x))*datavisionview_size(x));...
-                floor((0.47-gap(y))*datavisionview_size(y)) , floor((0.48-gap(x))*datavisionview_size(x)) ];
-            
-eastroi    =[  ceil((0.47+sensor(y)/2)*datavisionview_size(y)) ,  ceil((0.525+gap(x))*datavisionview_size(x));...
-                floor((0.47+sensor(y))*datavisionview_size(y)) , floor((0.525+gap(x)+sensor(x)/2)*datavisionview_size(x)) ];
+                floor((0.47-gap(y))*datavisionview_size(y))            , floor((0.48-gap(x))*datavisionview_size(x)) ];
+eastroi    =[  ceil((0.47+sensor(y)/2)*datavisionview_size(y))         ,  ceil((0.525+gap(x))*datavisionview_size(x));...
+                floor((0.47+sensor(y))*datavisionview_size(y))         , floor((0.525+gap(x)+sensor(x)/2)*datavisionview_size(x)) ];
 
 southroi = [  ceil((0.535+gap(y))*datavisionview_size(y)) ,  ceil((0.48+sensor(x)/2)*datavisionview_size(x));...
                 floor((0.535+sensor(y)/2+gap(y))*datavisionview_size(y)) , floor((0.48+sensor(x))*datavisionview_size(x)) ];
@@ -85,8 +86,7 @@ figure
 showinformationscreen = imshow(masked_screen, 'InitialMagnification',100);
 title('The gamefield with detection patches')
 
-pause(4);
-% Switch to the diepio screen
+pause(4);  % Switch to the diepio screen
 
 %Begin playing the game
 
@@ -98,7 +98,7 @@ timer = tic;i2=0;%For finding frame-rate data.
 %%
 while  playgame == true
     i=i+1;
-    if i>3600    %For prototyping, ensure the robo shuts down eventually.
+    if i>endonframe    %For prototyping, ensure the robo shuts down eventually.
         playgame=false;
     end    
     
@@ -111,17 +111,13 @@ while  playgame == true
                 transpose(reshape(pixelsData(3, scaler:scaler:end, scaler:scaler:end), datavisionview_size(x) , datavisionview_size(y))), ...
                 transpose(reshape(pixelsData(2, scaler:scaler:end, scaler:scaler:end), datavisionview_size(x) , datavisionview_size(y))), ...
                 transpose(reshape(pixelsData(1, scaler:scaler:end, scaler:scaler:end), datavisionview_size(x) , datavisionview_size(y))));
-
-    %    gamescreen = imread('test.png'); % protoyping
-    if  isequal(sum(transpose(smallgamescreen(1:5, 1:20, 2)) > 173 ) >15,    ... %This is a goofy, non-restrictive threshold
-        sum(transpose(smallgamescreen( 1:5, 1:20, 2)) < 177 ) >15) &&...
-       sum(any(smallgamescreen(1:5,1:20 ,3) > 233))>30
-        %This is the best I could do, specific to my color scheme, but
-        %MATLAB lacks any ability to intercept keyboard inputs, while the
-        %focus is on a non-MATLAB window.
-        error('You have elected to exit the game')
-    end
     
+	 %% A prototyping mechanism to feed-in certain frames, to re-play scenarios
+    if i>=30 & i<=55
+        smallgamescreen = imread(sprintf('screen%d.jpg', i));
+    end
+    %    gamescreen = imread('test.png'); % protoyping
+       
 
     %% Silhouette objects on the field
     [blue_sieve, red_sieve, yellow_sieve] = shape_shadows(smallgamescreen);
@@ -310,7 +306,6 @@ while  playgame == true
             robo.keyPress(goforward)
         end
     
-    FaceDirection
     robo.keyPress(goforward)
 
     end
@@ -330,8 +325,4 @@ while  playgame == true
     end
     showinformationscreen.CData = informationscreen;
 end
-
-robo.keyRelease(KeyEvent.VK_UP);
-robo.keyRelease(KeyEvent.VK_DOWN);
-robo.keyRelease(KeyEvent.VK_LEFT);
-robo.keyRelease(KeyEvent.VK_RIGHT); 
+warnings
