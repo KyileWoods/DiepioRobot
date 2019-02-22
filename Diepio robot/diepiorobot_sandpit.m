@@ -98,7 +98,7 @@ timer = tic;i2=0;%For finding frame-rate data.
 %%
 while  playgame == true
     i=i+1;
-    if i>150    %For prototyping, ensure the robo shuts down eventually.
+    if i>3600    %For prototyping, ensure the robo shuts down eventually.
         playgame=false;
     end    
     
@@ -330,3 +330,8 @@ while  playgame == true
     end
     showinformationscreen.CData = informationscreen;
 end
+
+robo.keyRelease(KeyEvent.VK_UP);
+robo.keyRelease(KeyEvent.VK_DOWN);
+robo.keyRelease(KeyEvent.VK_LEFT);
+robo.keyRelease(KeyEvent.VK_RIGHT); 
