@@ -75,12 +75,14 @@ masked_screen = zeros(datavisionview_size(y), datavisionview_size(x));  %Color-t
 
 
 %% Create Figures
-figure
-COMpoints = imshow(points_screen, 'InitialMagnification', 100);
-title('Centre Of Mass of farmable shape objects')
-figure
-bwblob = imshow(masked_screen, 'InitialMagnification', 100);
-title('Sillhouettes of farmable shape objects')
+if debugging == true
+    figure
+    COMpoints = imshow(points_screen, 'InitialMagnification', 100);
+    title('Centre Of Mass of farmable shape objects')
+    figure
+    bwblob = imshow(masked_screen, 'InitialMagnification', 100);
+    title('Sillhouettes of farmable shape objects')
+end
 figure
 showinformationscreen = imshow(masked_screen, 'InitialMagnification',100);
 title('The gamefield with detection patches')
@@ -98,7 +100,7 @@ timer = tic;i2=0;%For finding frame-rate data.
 %%
 while  playgame == true
     i=i+1;
-    if i>150    %For prototyping, ensure the robo shuts down eventually.
+    if i>5500    %For prototyping, ensure the robo shuts down eventually.
         playgame=false;
     end    
     
@@ -310,7 +312,6 @@ while  playgame == true
             robo.keyPress(goforward)
         end
     
-    FaceDirection
     robo.keyPress(goforward)
 
     end
