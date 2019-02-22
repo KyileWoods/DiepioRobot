@@ -67,7 +67,6 @@ northroi = [  ceil((0.47-gap(y)-sensor(y)/2)*datavisionview_size(y)) ,  ceil((0.
 
 
 %% Create Figures
-
 figure
 showinformationscreen = imshow(masked_screen, 'InitialMagnification',100);
 title('The gamefield with detection patches')
@@ -283,6 +282,7 @@ while  playgame == true
             %The bot is in the green zone, no context, no preference
             %for movement direction.
             robo.keyPress(goforward)
+
         else %Something unexpected has happened
             warning('Heading %d, the front was not in outerbounds or grey, and backright was not in green. Perhaps this is some edge-case glitch', FaceDirection)
         end  
